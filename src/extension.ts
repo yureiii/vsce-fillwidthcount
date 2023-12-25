@@ -40,10 +40,16 @@ export class CharacterCounter {
   public _getCharacterCount(doc: TextDocument): number {
     let docContent = doc.getText();
     // カウントに含めない文字を削除する
+    // gm の replace は \s 削除より先
+    // 半角文字削除は最後
     docContent = docContent
+      .replace(/^\s*#.*$/gm, "") // 見出し
       .replace(/\s/g, "") // すべての空白文字
-      .replace(/《(.+?)》/g, "") // ルビ範囲指定記号とその中の文字
-      .replace(/[\|｜]/g, ""); // ルビ開始記号
+      .replace(/<!--[\s\S]*?-->/g, "") // コメントアウトした文字
+      .replace(/《[\s\S]*?》/g, "") // ルビ範囲指定記号とその中の文字
+      .replace(/<rt>[\s\S]*?<\/rt>/g, "") // ルビ範囲指定記号とその中の文字
+      .replace(/[\|｜]/g, "") // ルビ開始記号
+      .replace(/[\x00-\x7F]/g, ""); // 半角文字 (ASCII)
     let characterCount = 0;
     if (docContent !== "") {
       characterCount = docContent.length;
