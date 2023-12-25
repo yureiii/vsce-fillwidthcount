@@ -27,6 +27,49 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "npm run compile && node ./node_modules/vscode/bin/test"
   },
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "headline",
+      "properties": {
+        "vsce-fullwidthcount.heading": {
+          "type": "boolean",
+          "default": false,
+          "description": "見出し (# から始まる行の文章) を数える"
+        },
+        "vsce-fullwidthcount.whitespace": {
+          "type": "boolean",
+          "default": false,
+          "description": "空白 (半角・全角・改行コード含む) を数える"
+        },
+        "vsce-fullwidthcount.htmlComment": {
+          "type": "boolean",
+          "default": false,
+          "description": "<!-- から --> までを数える"
+        },
+        "vsce-fullwidthcount.aozoraRuby": {
+          "type": "boolean",
+          "default": false,
+          "description": "《 から 》 までを数える"
+        },
+        "vsce-fullwidthcount.htmlRuby": {
+          "type": "boolean",
+          "default": false,
+          "description": "<rt> から </rt> までを数える"
+        },
+        "vsce-fullwidthcount.verticalBarRuby": {
+          "type": "boolean",
+          "default": false,
+          "description": "|・｜ を数える"
+        },
+        "vsce-fullwidthcount.asciiCharacters": {
+          "type": "boolean",
+          "default": false,
+          "description": "半角文字を数える"
+        }
+      }
+    }
+  },
   "devDependencies": {
     "@types/vscode": "^1.85.0",
     "@types/mocha": "^10.0.6",

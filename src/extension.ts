@@ -1,6 +1,7 @@
 "use strict";
 import {
   window,
+  workspace,
   Disposable,
   ExtensionContext,
   StatusBarAlignment,
@@ -16,6 +17,38 @@ export function activate(context: ExtensionContext) {
 
 export class CharacterCounter {
   private _statusBarItem!: StatusBarItem;
+  // カウントに含めない文字を削除する
+  // gm の replace は \s 削除より先
+  // 半角文字削除は最後
+  private _deleteRegexsInfo = [
+    { regex: /^\s*#.*$/gm, optionName: "heading" }, // 見出し
+    { regex: /\s/g, optionName: "whitespace" }, // すべての空白文字
+    { regex: /<!--[\s\S]*?-->/g, optionName: "htmlComment" }, // コメントアウトした文字
+    { regex: /《[\s\S]*?》/g, optionName: "aozoraRuby" }, // ルビ範囲指定記号とその中の文字
+    { regex: /<rt>[\s\S]*?<\/rt>/g, optionName: "htmlRuby" }, // ルビ範囲指定記号とその中の文字 <ruby> は数える
+    { regex: /[\|｜]/g, optionName: "verticalBarRuby" }, // ルビ開始記号
+    { regex: /[\x00-\x7F]/g, optionName: "asciiCharacters" }, // 半角文字 (ASCII)
+  ];
+  private _deleteRegexs; // オプションに変更があると _deleteRegex の要素を増減させる
+
+  constructor() {
+    this._deleteRegexs = this._deleteRegexsInfo.map((item) => item.regex);
+    // オプションで数える種類を変更する
+    // 頻繁には呼ばれないはずなので処理の速さは気にしない
+    workspace.onDidChangeConfiguration((_) => this.updateDeleteRegexs());
+  }
+
+  public updateDeleteRegexs() {
+    this._deleteRegexs = this._deleteRegexsInfo
+      .filter(
+        ({ optionName }) =>
+          workspace
+            .getConfiguration()
+            .get("vsce-fullwidthcount." + optionName) == false
+      )
+      .map((regexInfo) => regexInfo.regex);
+  }
+
   public updateCharacterCount() {
     if (!this._statusBarItem) {
       this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
@@ -37,21 +70,9 @@ export class CharacterCounter {
     }
   }
 
-  // カウントに含めない文字を削除する
-  // gm の replace は \s 削除より先
-  // 半角文字削除は最後
-  private _delete_regexs = [
-    /^\s*#.*$/gm, // 見出し
-    /\s/g, // すべての空白文字
-    /<!--[\s\S]*?-->/g, // コメントアウトした文字
-    /《[\s\S]*?》/g, // ルビ範囲指定記号とその中の文字
-    /<rt>[\s\S]*?<\/rt>/g, // ルビ範囲指定記号とその中の文字
-    /[\|｜]/g, // ルビ開始記号
-    /[\x00-\x7F]/g, // 半角文字 (ASCII)
-  ];
   public _getCharacterCount(doc: TextDocument): number {
     let docContent = doc.getText();
-    this._delete_regexs.forEach(
+    this._deleteRegexs.forEach(
       (regex) => (docContent = docContent.replace(regex, ""))
     );
     let characterCount = 0;
